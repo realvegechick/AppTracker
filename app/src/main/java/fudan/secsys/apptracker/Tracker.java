@@ -1,11 +1,13 @@
 package fudan.secsys.apptracker;
 
 import android.util.Log;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import fudan.secsys.apptracker.Database;
 
 public class Tracker {
     static class LogThread extends Thread {
@@ -19,6 +21,15 @@ public class Tracker {
                 while ((line = br.readLine()) != null && flag==1) {
                     if (line.contains("AppTracker") && (!line.contains("MaldectTest"))) {
                         //Todo: SQLite
+                        //Todo: Log内容解析
+                        String servName = "";
+                        String methName = "";
+                        String paras = "";
+                        int callingUid = 0;
+                        int callingPid = 0;
+                        Database.insert(servName, methName, paras, callingUid, callingPid);
+
+
                         Log.d("MaldectTest.Log", line);
                     }
                 }
