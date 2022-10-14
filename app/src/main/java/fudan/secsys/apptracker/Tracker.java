@@ -1,5 +1,6 @@
 package fudan.secsys.apptracker;
 
+import android.location.Location;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -19,16 +20,24 @@ public class Tracker {
                 BufferedReader br = new BufferedReader(new InputStreamReader(is));
                 String line;
                 while ((line = br.readLine()) != null && flag==1) {
-                    if (line.contains("AppTracker") && (!line.contains("MaldectTest"))) {
+                    //if (line.contains("AppTracker") && (!line.contains("MaldectTest"))) {
+                    if(line.contains("Maldetect")){
                         //Todo: SQLite
-                        //Todo: Log内容解析
-                        String servName = "";
-                        String methName = "";
-                        String paras = "";
-                        int callingUid = 0;
-                        int callingPid = 0;
-                        Database.insert(servName, methName, paras, callingUid, callingPid);
+                        int index;
+                        int callingUid = Integer.parseInt(line.substring(line.indexOf("callingUid:") + "callingUid:".length(),
+                                index = line.indexOf(",")));
+                        int callingPid = Integer.parseInt(line.substring(line.indexOf("callingPid:") + "callingPid:".length(),
+                                index = line.indexOf(",", index + 1)));
+                        String serviceName = line.substring(index + 1,
+                                index = line.indexOf(".", index + 1));
+                        String methodName = line.substring(index + 1,
+                                index = line.indexOf("(", index + 1));
+                        String parameters = line.substring(index + 1,
+                                index = line.indexOf(")", index + 1));
+                        if(parameters.length() == 0)
+                            parameters=null;
 
+                        Database.insert(serviceName, methodName, parameters, callingUid, callingPid);
 
                         Log.d("MaldectTest.Log", line);
                     }

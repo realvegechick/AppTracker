@@ -1,9 +1,12 @@
 package fudan.secsys.apptracker;
+import android.util.Log;
+
 import java.sql.*;
 
 public class Database {
-    static final String JDBC_DRIVER = "com.mysql.cj.jdbc.Driver";
-    static final String DB_URL = "jdbc:mysql://10.177.83.229:3306/log";
+    static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
+    //设备和数据库须在同一网络下
+    static final String DB_URL = "jdbc:mysql://192.168.251.179:3306/log";
     // static final String DB_URL = "jdbc:mysql://DESKTOP-8BHQG8P/log";
 
     static final String USER = "root";
@@ -14,11 +17,13 @@ public class Database {
         PreparedStatement stmt = null;
         try {
             // 注册 JDBC 驱动器
-            Class.forName("com.mysql.cj.jdbc.Driver");
+            Class.forName(JDBC_DRIVER);
+            //Log.d("InteractingDatabase","START INSERT!!!");
 
             // 打开连接
             //System.out.println("Connecting to database...");
             conn = DriverManager.getConnection(DB_URL, USER, PASS);
+            //Log.d("InteractingDatabase","CONNECTED WITH DATABASE!!!");
 
             // 执行sql语句
             //System.out.println("Creating statement...");
@@ -35,6 +40,7 @@ public class Database {
             //执行sql语句，返回类型为int，代表操作的数据条数
             int rows = stmt.executeUpdate();// int executeUpdate(String SQL)
             //System.out.println("被影响的行数 : " + rows);
+            //Log.d("InteractingDatabase","FINISH INSERT!!!");
 
             /*
              * sql = "SELECT id, name, age FROM info";
