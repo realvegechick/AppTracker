@@ -36,9 +36,9 @@ public class Tracker {
                 BufferedReader br = new BufferedReader(new InputStreamReader(is));
                 String line;
                 //创建数据表
-                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA);
-                Date date = new Date(System.currentTimeMillis());
-                String time = simpleDateFormat.format(date);
+                //SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA);
+                //Date date = new Date(System.currentTimeMillis());
+                String time = String.valueOf(System.currentTimeMillis());
                 String tabname= "`"+pkgName+" "+time+"`";
                 Database.createTab(tabname);
                 boolean isEmptyTab = true;
@@ -68,8 +68,15 @@ public class Tracker {
                             //Todo: SQLite
                             int space = line.indexOf(" ");
                             space = line.indexOf(" ", space + 1);
-                            String timeStamp = line.substring(0, space);
-                            System.out.println(timeStamp);
+                            String formatTime = "2022-" + line.substring(0, space);
+                            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS",Locale.CHINA);
+                            long timeStamp = 0;
+                            try{
+                                Date date = simpleDateFormat.parse(formatTime);
+                                timeStamp = date.getTime();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
 
                             String serviceName = line.substring(index + 1,
                                     index = line.indexOf(".", index + 1));
@@ -80,7 +87,7 @@ public class Tracker {
                             if (parameters.length() == 0)
                                 parameters = null;
 
-                            Database.insert(tabname, timeStamp, serviceName, methodName, parameters, callingUid, callingPid);
+                            Database.insert(tabname, timeStamp, serviceName, methodName, parameters, callingPid);
                             isEmptyTab = false;
 
                             Log.d("MaldectTest.Log", line);

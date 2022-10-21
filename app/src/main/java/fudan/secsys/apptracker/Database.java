@@ -31,7 +31,7 @@ public class Database {
             //Log.d("InteractingDatabase","CONNECTED WITH DATABASE!!!");
 
             // 创建数据表
-            String createTabSql = "CREATE TABLE " + tabName + "(timeStamp varchar(30), serviceName varchar(50), methodName varchar(50), parameters varchar(1024), callingUid int,callingPid int);";
+            String createTabSql = "CREATE TABLE " + tabName + "(timeStamp long, callingPid int, serviceName varchar(50), methodName varchar(50), parameters varchar(1024));";
 
             stmt = conn.prepareStatement(createTabSql);
             stmt.executeUpdate();
@@ -57,7 +57,7 @@ public class Database {
         }
     }
 
-    public static void insert(String tabName, String timeStamp, String serviceName, String methodName, String parameters, int callingUid, int callingPid) throws Exception {
+    public static void insert(String tabName, long timeStamp, String serviceName, String methodName, String parameters, int callingPid) throws Exception {
         Connection conn = null;
         PreparedStatement stmt = null;
 
@@ -71,16 +71,16 @@ public class Database {
             //Log.d("InteractingDatabase","CONNECTED WITH DATABASE!!!");
 
             // 执行sql语句
-            String sql = "INSERT into " + tabName + " value(?,?,?,?,?,?);";
+            String sql = "INSERT into " + tabName + " value(?,?,?,?,?);";
             stmt = conn.prepareStatement(sql);
 
             // 参数赋值，参数从左至右序号为 1，2...
-            stmt.setString(1, timeStamp);
-            stmt.setString(2, serviceName);
-            stmt.setString(3, methodName);
-            stmt.setString(4, parameters);
-            stmt.setInt(5, callingUid);
-            stmt.setInt(6, callingPid);
+            stmt.setLong(1, timeStamp);
+            stmt.setInt(2, callingPid);
+            stmt.setString(3, serviceName);
+            stmt.setString(4, methodName);
+            stmt.setString(5, parameters);
+
 
             //执行sql语句，返回类型为int，代表操作的数据条数
             stmt.executeUpdate();// int executeUpdate(String SQL)
