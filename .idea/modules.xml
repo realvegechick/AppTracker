@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/AppTracker.iml" filepath="$PROJECT_DIR$/AppTracker.iml" group="AppTracker" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" group="AppTracker/app" />
       <module fileurl="file://$PROJECT_DIR$/app/testAPP-app.iml" filepath="$PROJECT_DIR$/app/testAPP-app.iml" group="AppTracker/app" />
     </modules>
   </component>

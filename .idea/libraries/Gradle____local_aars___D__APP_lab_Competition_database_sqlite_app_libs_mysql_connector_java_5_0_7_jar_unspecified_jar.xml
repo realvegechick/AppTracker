@@ -1,5 +1,5 @@
 <component name="libraryTable">
-  <library name="Gradle: __local_aars__:C./Users/13753/Desktop/github/AppTracker/app/libs/mysql-connector-java-5.0.7.jar:unspecified@jar">
+  <library name="Gradle: __local_aars__:D./APP_lab/Competition/database/sqlite/app/libs/mysql-connector-java-5.0.7.jar:unspecified@jar">
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/app/libs/mysql-connector-java-5.0.7.jar!/" />
     </CLASSES>
