@@ -15,7 +15,7 @@ public class DBOpenHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
         String createTabSql = "CREATE TABLE Log" + "(tag varchar(50), timeStamp long, callingPid int, serviceName varchar(50), methodName varchar(50), parameters varchar(1024))";
         sqLiteDatabase.execSQL(createTabSql);
-        createTabSql = "CREATE TABLE BPF" + "(tag varchar(50), timeStamp long, callingPid long, syscall varchar(10), parameters varchar(200), str varchar(256), ret long)";
+        createTabSql = "CREATE TABLE BPF" + "(tag varchar(50), timeStamp long, callingPid long, syscall varchar(30), parameters varchar(200), str varchar(256), ret long)";
         sqLiteDatabase.execSQL(createTabSql);
 
     }

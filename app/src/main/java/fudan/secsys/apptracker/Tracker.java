@@ -134,9 +134,11 @@ public class Tracker {
                 //Database.createBPF(tabname);
                 DBOpenHelper dbOpenHelper = new DBOpenHelper(MyApplication.getContext(), "test2.db",null, 1);
                 SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
+                db.execSQL("PRAGMA synchronous = OFF;");
+                db.execSQL("begin;");
              //   String createTabSql = "CREATE TABLE BPF"+ "(tag varchar(50), timeStamp long, callingPid long, syscall varchar(10), parameters varchar(200), str varchar(256), ret long)";
              //   db.execSQL(createTabSql);
-
+                int enter=0,exit=0;
                 while ((line = br.readLine()) != null && flag==1) {
                     if(line.contains(pkgName)) {
                         String[] str_array=line.split(", ");
@@ -144,6 +146,7 @@ public class Tracker {
                         final long time,pid,ret;
                         long args[]=new long[6];
                         if(str_array.length>5){//sys_enter
+                            enter+=1;
                             time=Long.parseLong(str_array[0]);
                             pid=Long.parseLong(str_array[2]);
                             syscall=str_array[3];
@@ -171,53 +174,26 @@ public class Tracker {
                             db.insert("BPF", null, values);
                         }
                         else{//sys_exit
+                            exit+=1;
                             time=Long.parseLong(str_array[0]);
                             pid=Long.parseLong(str_array[2]);
                             syscall=str_array[3];
                             ret=Long.parseLong(str_array[4]);
-                            //line="time:"+time+", app:"+app+", pid:"+pid+", syscall:"+syscall+", ret:"+ret;
-                            //Log.d("MaldectTest.BPF",line);
-                            //Database.insertBPF(tabname, time, pid, syscall, null, null, ret, true);
-
-                           // String querySql = "SELECT * FROM " + tabname + " WHERE callingPid=? AND syscall=? AND ret=? ORDER BY timeStamp";
-                           // Cursor cursor = db.rawQuery(querySql, new String[]{String.valueOf(pid), syscall ,String.valueOf(-2147483648)});
-
-                            String querySql = "SELECT * FROM BPF WHERE callingPid=" + pid + " AND syscall="+"'"+syscall+"'"+" AND ret="+String.valueOf(-2147483648)+" ORDER BY timeStamp";
-                            Cursor cursor = db.rawQuery(querySql,null);
-                            //if (cursor.getCount()!=0){
-                                cursor.moveToFirst();
-                                if(!cursor.isAfterLast()){
-                                    long o_time = cursor.getLong(0);
-                                    if(o_time<time){
-                                      //  String sql = "UPDATE BPF SET ret=? WHERE timeStamp=? AND callingPid=? AND syscall=?";
-                                       // db.execSQL(sql, new Object[]{ret, o_time,pid, syscall});
-
-                                        ContentValues values = new ContentValues();
-                                        values.put("ret", ret);
-                                        int rows = db.update("BPF", values, "timeStamp=? AND callingPid=? AND syscall=?",new String[]{String.valueOf(o_time), String.valueOf(pid),syscall});
-                                        Log.d("maldebug", "rows: "+rows);
-                                        Log.d("maldebug",line);
-                                        Log.d("maldebug", "==============================");
-                                      //  db.execSQL("commit;");
-
-                                    }else{
-                                        Log.d("maldebug","time:"+o_time);
-                                        Log.d("maldebug",line);
-                                        Log.d("maldebug", querySql);
-                                       // Log.d("maldebug", tabname + ","+pid+","+syscall+","+ret);
-                                    }
-                                }else {
-                                    Log.d("maldebug","select");
-                                    Log.d("maldebug",line);
-                                    Log.d("maldebug", querySql);
-                                  //  Log.d("maldebug", tabname + ","+pid+","+syscall+","+ret);
-                                }
-                            //}
-                            cursor.close();
+                            ContentValues values = new ContentValues();
+                            values.put("tag", tabName);
+                            values.put("timeStamp", time);
+                            values.put("callingPid", pid);
+                            values.put("syscall", syscall);
+                            values.put("parameters","");
+                            values.put("str", "");
+                            values.put("ret", ret);
+                            db.insert("BPF", null, values);
                         }
                     }
                 }
+                db.execSQL("commit;");
                 db.close();
+                Log.d("maldebug", "enter: "+enter+" exit: "+exit);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -227,7 +203,7 @@ public class Tracker {
     static BPFThread t_bpf;
     static void startTrack(String app_name){
         Date date = new Date(System.currentTimeMillis());
-        String tabname= "`"+app_name+" "+date+"`";
+        String tabname= app_name+" "+date;
         t_log=new LogThread(app_name, tabname);
         t_log.flag=1;
         t_log.start();
