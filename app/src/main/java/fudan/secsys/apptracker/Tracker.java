@@ -24,9 +24,11 @@ public class Tracker {
     static class LogThread extends Thread {
         int flag = 1;
         static private String pkgName;
+        static private String tabName;
 
-        public LogThread(String app_name) {
+        public LogThread(String app_name, String tabname) {
             pkgName = app_name;
+            tabName = tabname;
         }
 
         public void run() {
@@ -36,34 +38,24 @@ public class Tracker {
                 BufferedReader br = new BufferedReader(new InputStreamReader(is));
                 String line;
                 //创建数据表
-                DBOpenHelper dbOpenHelper = new DBOpenHelper(MyApplication.getContext(), "log.db",null, 1);
+                DBOpenHelper dbOpenHelper = new DBOpenHelper(MyApplication.getContext(), "test2.db",null, 1);
                 SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
-
-
                 //SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA);
-                Date date = new Date(System.currentTimeMillis());
-                String tabname= "`"+pkgName+" "+date+" Log`";
+              //  Date date = new Date(System.currentTimeMillis());
+               // String tabname= "`"+pkgName+" "+date+" Log`";
              //   Database.createLog(tabname);
-                String createTabSql = "CREATE TABLE " + tabname + "(timeStamp long, callingPid int, serviceName varchar(50), methodName varchar(50), parameters varchar(1024))";
-                db.execSQL(createTabSql);
-                boolean isEmptyTab = true;
+              //  String createTabSql = "CREATE TABLE Log" + "(tag varchar(50), timeStamp long, callingPid int, serviceName varchar(50), methodName varchar(50), parameters varchar(1024))";
+               // db.execSQL(createTabSql);
 
                 while ((line = br.readLine()) != null && flag==1) {
-                    if(line.contains("Maldetect") && !line.contains("zzzzzzz")) {
+                    if(line.contains("Maldetect") && line.contains("callingUid:") && line.contains("callingPid:")) {
                         int index=0;
-
-                        int callingPid=0;
-                        try {
-                            int callingUid = Integer.parseInt(line.substring(line.indexOf("callingUid:") + "callingUid:".length(),
+                        int callingUid = Integer.parseInt(line.substring(line.indexOf("callingUid:") + "callingUid:".length(),
                                     index = line.indexOf(",")));
-                            callingPid = Integer.parseInt(line.substring(line.indexOf("callingPid:") + "callingPid:".length(),
+                        int callingPid = Integer.parseInt(line.substring(line.indexOf("callingPid:") + "callingPid:".length(),
                                     index = line.indexOf(",", index + 1)));
-                        }catch (Exception e){
-                            Log.d("zzzzzzz", line);
-                            e.printStackTrace();
-                        }
 
-                        //获取包名
+                        //匹配输入的包名
                         String callingPkgName = "";
                         ActivityManager activityManager = (ActivityManager) MyApplication.getContext().getSystemService(Context.ACTIVITY_SERVICE);
                         if (activityManager != null) {
@@ -84,7 +76,7 @@ public class Tracker {
                             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS",Locale.CHINA);
                             long timeStamp = 0;
                             try{
-                                date = simpleDateFormat.parse(formatTime);
+                                Date date = simpleDateFormat.parse(formatTime);
                                 timeStamp = date.getTime();
                             } catch (Exception e) {
                                 e.printStackTrace();
@@ -104,21 +96,16 @@ public class Tracker {
                             String finalParameters = parameters;
                          //   Database.insertLog(tabname, finalTimeStamp, serviceName, methodName, finalParameters, callingPid);
                             ContentValues values = new ContentValues();
+                            values.put("tag", tabName);
                             values.put("timeStamp", finalTimeStamp);
                             values.put("callingPid", callingPid);
                             values.put("serviceName", serviceName);
                             values.put("methodName", methodName);
                             values.put("parameters", finalParameters);
-                            db.insert(tabname, null, values);
-                            isEmptyTab = false;
+                            db.insert("Log", null, values);
 
                         }
                     }
-                }
-                //删除空表
-                if(isEmptyTab){
-                //    Database.dropTab(tabname);
-                    db.execSQL("drop table "+ tabname);
                 }
                 db.close();
             } catch (Exception e) {
@@ -129,9 +116,11 @@ public class Tracker {
     static class BPFThread extends Thread {
         int flag = 1;
         static private String pkgName;
+        static private String tabName;
 
-        public BPFThread(String app_name) {
+        public BPFThread(String app_name, String tabname) {
             pkgName = app_name;
+            tabName = tabname;
         }
         public void run() {
             try {
@@ -140,14 +129,13 @@ public class Tracker {
                 InputStream is = server.getInputStream();
                 BufferedReader br = new BufferedReader(new InputStreamReader(is));
                 String line;
-                Date date = new Date(System.currentTimeMillis());
-                String tabname= "`"+pkgName+" "+date+" BPF`";
+                //Date date = new Date(System.currentTimeMillis());
+                //String tabname= "`"+pkgName+" "+date+" BPF`";
                 //Database.createBPF(tabname);
-                DBOpenHelper dbOpenHelper = new DBOpenHelper(MyApplication.getContext(), "log.db",null, 1);
+                DBOpenHelper dbOpenHelper = new DBOpenHelper(MyApplication.getContext(), "test2.db",null, 1);
                 SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
-                String createTabSql = "CREATE TABLE " + tabname + "(timeStamp long, callingPid long, syscall varchar(10), parameters varchar(200), str varchar(256), ret long)";
-                db.execSQL(createTabSql);
-                boolean isEmptyTab = true;
+             //   String createTabSql = "CREATE TABLE BPF"+ "(tag varchar(50), timeStamp long, callingPid long, syscall varchar(10), parameters varchar(200), str varchar(256), ret long)";
+             //   db.execSQL(createTabSql);
 
                 while ((line = br.readLine()) != null && flag==1) {
                     if(line.contains(pkgName)) {
@@ -173,14 +161,14 @@ public class Tracker {
                             //Log.d("MaldectTest.BPF",line);
                             //Database.insertBPF(tabname, time, pid, syscall, args.toString(), str, -2147483648, false);
                             ContentValues values = new ContentValues();
+                            values.put("tag", tabName);
                             values.put("timeStamp", time);
                             values.put("callingPid", pid);
                             values.put("syscall", syscall);
                             values.put("parameters",args[0]+","+args[1]+","+args[2]+","+args[3]+","+args[4]+","+args[5]);
                             values.put("str", str);
                             values.put("ret", -2147483648);
-                            db.insert(tabname, null, values);
-                            isEmptyTab = false;
+                            db.insert("BPF", null, values);
                         }
                         else{//sys_exit
                             time=Long.parseLong(str_array[0]);
@@ -191,24 +179,43 @@ public class Tracker {
                             //Log.d("MaldectTest.BPF",line);
                             //Database.insertBPF(tabname, time, pid, syscall, null, null, ret, true);
 
-                            String querySql = "SELECT * FROM " + tabname + " WHERE callingPid=? AND syscall=? AND ret=? ORDER BY timeStamp";
-                            Cursor cursor = db.rawQuery(querySql, new String[]{String.valueOf(pid), syscall ,String.valueOf(-2147483648)});
-                            cursor.moveToFirst();
-                            if(!cursor.isAfterLast()){
-                                long o_time = cursor.getLong(0);
-                                if(o_time<time){
-                                    String sql = "UPDATE "+tabname+" SET ret=? WHERE timeStamp=? AND callingPid=? AND syscall=?";
-                                    db.execSQL(sql, new Object[]{ret, o_time, pid, syscall});
+                           // String querySql = "SELECT * FROM " + tabname + " WHERE callingPid=? AND syscall=? AND ret=? ORDER BY timeStamp";
+                           // Cursor cursor = db.rawQuery(querySql, new String[]{String.valueOf(pid), syscall ,String.valueOf(-2147483648)});
+
+                            String querySql = "SELECT * FROM BPF WHERE callingPid=" + pid + " AND syscall="+"'"+syscall+"'"+" AND ret="+String.valueOf(-2147483648)+" ORDER BY timeStamp";
+                            Cursor cursor = db.rawQuery(querySql,null);
+                            //if (cursor.getCount()!=0){
+                                cursor.moveToFirst();
+                                if(!cursor.isAfterLast()){
+                                    long o_time = cursor.getLong(0);
+                                    if(o_time<time){
+                                      //  String sql = "UPDATE BPF SET ret=? WHERE timeStamp=? AND callingPid=? AND syscall=?";
+                                       // db.execSQL(sql, new Object[]{ret, o_time,pid, syscall});
+
+                                        ContentValues values = new ContentValues();
+                                        values.put("ret", ret);
+                                        int rows = db.update("BPF", values, "timeStamp=? AND callingPid=? AND syscall=?",new String[]{String.valueOf(o_time), String.valueOf(pid),syscall});
+                                        Log.d("maldebug", "rows: "+rows);
+                                        Log.d("maldebug",line);
+                                        Log.d("maldebug", "==============================");
+                                      //  db.execSQL("commit;");
+
+                                    }else{
+                                        Log.d("maldebug","time:"+o_time);
+                                        Log.d("maldebug",line);
+                                        Log.d("maldebug", querySql);
+                                       // Log.d("maldebug", tabname + ","+pid+","+syscall+","+ret);
+                                    }
+                                }else {
+                                    Log.d("maldebug","select");
+                                    Log.d("maldebug",line);
+                                    Log.d("maldebug", querySql);
+                                  //  Log.d("maldebug", tabname + ","+pid+","+syscall+","+ret);
                                 }
-                            }
+                            //}
                             cursor.close();
                         }
                     }
-                }
-                //删除空表
-                if(isEmptyTab){
-                    //Database.dropTab(tabname);
-                    db.execSQL("drop table "+ tabname);
                 }
                 db.close();
             } catch (Exception e) {
@@ -219,16 +226,18 @@ public class Tracker {
     static LogThread t_log;
     static BPFThread t_bpf;
     static void startTrack(String app_name){
-        t_log=new LogThread(app_name);
+        Date date = new Date(System.currentTimeMillis());
+        String tabname= "`"+app_name+" "+date+"`";
+        t_log=new LogThread(app_name, tabname);
         t_log.flag=1;
         t_log.start();
-        t_bpf=new BPFThread(app_name);
+        t_bpf=new BPFThread(app_name, tabname);
         t_bpf.flag=1;
         t_bpf.start();
     }
     static void stopTrack() {
-        String oldpath = "/data/data/fudan.secsys.apptracker/databases/log.db";
-        String newpath = "/sdcard/database/log.db";
+        String oldpath = "/data/data/fudan.secsys.apptracker/databases/test2.db";
+        String newpath = "/sdcard/database/test2.db";
         try{
             File oldfile = new File(oldpath);
             if (oldfile.exists() && oldfile.isFile() && oldfile.canRead()) {
