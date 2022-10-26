@@ -154,17 +154,17 @@ public class Tracker {
                         String[] str_array=line.split(", ");
                         final String syscall,str;
                         final long time,pid,ret;
-                        double args[]=new double[6];
+                        long args[]=new long[6];
                         if(str_array.length>5){//sys_enter
                             time=Long.parseLong(str_array[0]);
                             pid=Long.parseLong(str_array[2]);
                             syscall=str_array[3];
-                            args[0]=Double.parseDouble(str_array[4]);
-                            args[1]=Double.parseDouble(str_array[5]);
-                            args[2]=Double.parseDouble(str_array[6]);
-                            args[3]=Double.parseDouble(str_array[7]);
-                            args[4]=Double.parseDouble(str_array[8]);
-                            args[5]=Double.parseDouble(str_array[9]);
+                            args[0]=Long.parseUnsignedLong(str_array[4]);
+                            args[1]=Long.parseUnsignedLong(str_array[5]);
+                            args[2]=Long.parseUnsignedLong(str_array[6]);
+                            args[3]=Long.parseUnsignedLong(str_array[7]);
+                            args[4]=Long.parseUnsignedLong(str_array[8]);
+                            args[5]=Long.parseUnsignedLong(str_array[9]);
                             if(str_array.length>10)
                                 str=str_array[10];
                             else
@@ -176,7 +176,7 @@ public class Tracker {
                             values.put("timeStamp", time);
                             values.put("callingPid", pid);
                             values.put("syscall", syscall);
-                            values.put("parameters",String.valueOf(args[0])+","+String.valueOf(args[1])+","+String.valueOf(args[2])+","+String.valueOf(args[3])+","+String.valueOf(args[4])+","+String.valueOf(args[5]));
+                            values.put("parameters",args[0]+","+args[1]+","+args[2]+","+args[3]+","+args[4]+","+args[5]);
                             values.put("str", str);
                             values.put("ret", -2147483648);
                             db.insert(tabname, null, values);
@@ -202,8 +202,6 @@ public class Tracker {
                                 }
                             }
                             cursor.close();
-                            isEmptyTab = false;
-
                         }
                     }
                 }
