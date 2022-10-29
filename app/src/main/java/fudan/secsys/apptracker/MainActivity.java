@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
                 text.setEnabled(true);
                 button_start.setEnabled(true);
                 button_stop.setEnabled(false);
-                Tracker.stopTrack();
+                Tracker.stopTrack(v.getContext());
             }
         });
     }
