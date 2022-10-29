@@ -190,19 +190,15 @@ public class Tracker {
 
                 //merge
                 //enterBPF = enterBPF.stream().sorted(Comparator.comparing(BPFinfo::BPFtime).reversed()).collect(Collectors.toList());
-                List<BPFinfo> result = new ArrayList<BPFinfo>();
-                Collections.sort(list, new Comparator<BPFinfo>() {
-                    @Override
-                    public int compare(BPFinfo bpFinfo, BPFinfo t1) {
-                        if (bpFinfo == null && t1 == null)
-                            return 0;
-                        if (bpFinfo == null)
-                            return 1;
-                        if (t1 == null)
-                            return -1;
-                        //return (int) (t1.BPFtime - bpFinfo.BPFtime);
-                        return Long.compare(t1.BPFtime, bpFinfo.BPFtime);
-                    }
+                Collections.sort(list, (bpFinfo, t1) -> {
+                    if (bpFinfo == null && t1 == null)
+                        return 0;
+                    if (bpFinfo == null)
+                        return 1;
+                    if (t1 == null)
+                        return -1;
+                    //return (int) (t1.BPFtime - bpFinfo.BPFtime);
+                    return Long.compare(t1.BPFtime, bpFinfo.BPFtime);
                 });
                 Log.d("maldebug", "Total bpf:"+list.size());
 
@@ -227,18 +223,13 @@ public class Tracker {
                             if (findpid != pidinfo || !findsys.equals(sysinfo) || findtime >= timeinfo)
                                 continue;
                             //found
-                            result.add(new BPFinfo(findtime, findpid, findsys, findarg, findstr, retinfo));
+                            list.set(i, new BPFinfo(findtime, findpid, findsys, findarg, findstr, retinfo));
                             list.remove(i_enter);
                             break;
                         }
-                        if (i_enter == list.size()) { //not found enter
-                            result.add(term);
-                        }
-                    } else { //enter
-                        result.add(term);
                     }
                 }
-                Log.d("maldebug", "Total bpf after merge: "+result.size());
+                Log.d("maldebug", "Total bpf after merge: "+list.size());
 
                 try {
                     Thread.sleep(3000);
@@ -255,8 +246,8 @@ public class Tracker {
 
                     String sql = "insert into BPF(tag, timeStamp, callingPid, syscall, parameters, str, ret) values(?,?,?,?,?,?,?);";
                     SQLiteStatement statement = db.compileStatement(sql);
-                    for (int i = 0; i < result.size(); i++) {
-                        BPFinfo res = result.get(i);
+                    for (int i = 0; i < list.size(); i++) {
+                        BPFinfo res = list.get(i);
                         statement.bindString(1, tabName);
                         statement.bindLong(2, res.BPFtime);
                         statement.bindLong(3, res.BPFpid);
