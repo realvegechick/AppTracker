@@ -188,7 +188,7 @@ public class Tracker {
                 }
                 Log.d("maldebug", "enter: " + enter + " exit: " + exit);
 
-                //merge
+                //merge enter and exit
                 //enterBPF = enterBPF.stream().sorted(Comparator.comparing(BPFinfo::BPFtime).reversed()).collect(Collectors.toList());
                 Collections.sort(list, (bpFinfo, t1) -> {
                     if (bpFinfo == null && t1 == null)
@@ -197,7 +197,6 @@ public class Tracker {
                         return 1;
                     if (t1 == null)
                         return -1;
-                    //return (int) (t1.BPFtime - bpFinfo.BPFtime);
                     return Long.compare(t1.BPFtime, bpFinfo.BPFtime);
                 });
                 Log.d("maldebug", "Total bpf:"+list.size());
