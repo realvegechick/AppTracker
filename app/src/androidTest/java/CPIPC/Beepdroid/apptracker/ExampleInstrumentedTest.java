@@ -1,4 +1,4 @@
-package fudan.secsys.apptracker;
+package CPIPC.Beepdroid.apptracker;
 
 import android.content.Context;
 

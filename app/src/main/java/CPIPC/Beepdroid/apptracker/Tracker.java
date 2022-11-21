@@ -1,6 +1,5 @@
-package fudan.secsys.apptracker;
+package CPIPC.Beepdroid.apptracker;
 
-import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -20,7 +19,6 @@ import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -30,10 +28,12 @@ public class Tracker {
         int flag = 1;
         static private String pkgName;
         static private String tabName;
+        static private int appUid;
 
-        public LogThread(String app_name, String tabname) {
+        public LogThread(String app_name, String tabname, int appuid) {
             pkgName = app_name;
             tabName = tabname;
+            appUid = appuid;
         }
 
         public void run() {
@@ -42,11 +42,10 @@ public class Tracker {
                 InputStream is = process.getInputStream();
                 BufferedReader br = new BufferedReader(new InputStreamReader(is));
                 String line;
-        //        DBOpenHelper dbOpenHelper = new DBOpenHelper(MyApplication.getContext(), "test9.db", null, 1);
-        //        SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
 
+                int log_count = 0;
                 try {
-                    //db.execSQL("PRAGMA synchronous = OFF;");
+                    db.execSQL("PRAGMA synchronous = OFF;");
                     //db.execSQL("begin;");
                     db.beginTransaction();
 
@@ -54,26 +53,17 @@ public class Tracker {
                     SQLiteStatement statement = db.compileStatement(sql);
 
                     while ((line = br.readLine()) != null && flag == 1) {
-                        if (line.contains("Maldetect") && line.contains("callingUid:") && line.contains("callingPid:")) {
+                        //if(!line.contains("maldebug"))
+                        //    Log.d("maldebug","Before: "+line);
+                        if (line.contains("Maldetect") && line.contains("callingUid") && line.contains("callingPid") &&!line.contains("maldebug")) {
                             int index = 0;
-                            int callingUid = Integer.parseInt(line.substring(line.indexOf("callingUid:") + "callingUid:".length(),
+                            int callingUid = Integer.parseInt(line.substring(line.indexOf("callingUid") + "callingUid:".length(),
                                     index = line.indexOf(",")));
-                            long callingPid = Long.parseLong(line.substring(line.indexOf("callingPid:") + "callingPid:".length(),
+                            long callingPid = Long.parseLong(line.substring(line.indexOf("callingPid") + "callingPid:".length(),
                                     index = line.indexOf(",", index + 1)));
 
-                            //匹配输入的包名
-                            String callingPkgName = "";
-                            ActivityManager activityManager = (ActivityManager) MyApplication.getContext().getSystemService(Context.ACTIVITY_SERVICE);
-                            if (activityManager != null) {
-                                List<ActivityManager.RunningAppProcessInfo> list = activityManager.getRunningAppProcesses();
-                                for (ActivityManager.RunningAppProcessInfo info : list) {
-                                    if (info.pid == callingPid) {
-                                        callingPkgName = info.processName;
-                                        break;
-                                    }
-                                }
-                            }
-                            if (callingPkgName.contains(pkgName)) {
+                            if (callingUid == appUid) {
+                            //    Log.d("maldebug", line);
                                 //Todo: SQLite
                                 int space = line.indexOf(" ");
                                 space = line.indexOf(" ", space + 1);
@@ -93,8 +83,7 @@ public class Tracker {
                                         index = line.indexOf("(", index + 1));
                                 String parameters = null;
                                 if (line.indexOf(")", index + 1) - (index + 1) > 1) {
-                                    parameters = line.substring(index + 1,
-                                            line.indexOf(")", index + 1));
+                                    parameters = line.substring(index + 1);
                                 }
 
                                 long finalTimeStamp = timeStamp;
@@ -110,6 +99,7 @@ public class Tracker {
                                 else
                                     statement.bindString(6, "");
                                 statement.executeInsert();
+                                log_count++;
 
                             }
                         }
@@ -117,12 +107,15 @@ public class Tracker {
                     //db.execSQL("commit;");
                     db.setTransactionSuccessful();
                 } catch (Exception e){
+                    Log.d("malerror", e.toString());
                     e.printStackTrace();
                 } finally {
                     db.endTransaction();
                 //    db.close();
                 }
+                Log.d("maldebug", "Total logs: "+ log_count);
             } catch (Exception e) {
+                Log.d("malerror", e.toString());
                 e.printStackTrace();
             }
         }
@@ -145,14 +138,18 @@ public class Tracker {
         public void run() {
             try {
                 ServerSocket s = new ServerSocket(23334);
+                Log.d("maldebug", "Enter bpf part!");
                 Socket server = s.accept();
                 InputStream is = server.getInputStream();
+
                 BufferedReader br = new BufferedReader(new InputStreamReader(is));
                 String line;
+
 
                 int enter = 0, exit = 0;
                 List<BPFinfo> list = new ArrayList<BPFinfo>();
                 while ((line = br.readLine()) != null && flag == 1) {
+                    //Log.d("maldebug-bpf", line);
                     if (line.contains(pkgName)) {
                         String[] str_array = line.split(", ");
                         final String syscall, str;
@@ -226,6 +223,11 @@ public class Tracker {
                             list.remove(i_enter);
                             break;
                         }
+                        //not found
+                        if(i_enter == list.size()){
+                            list.remove(i);
+                            i--;
+                        }
                     }
                 }
                 Log.d("maldebug", "Total bpf after merge: "+list.size());
@@ -283,12 +285,12 @@ public class Tracker {
     }
     static LogThread t_log;
     static BPFThread t_bpf;
-    static void startTrack(String app_name){
+    static void startTrack(String app_name, int appUid){
         MyDBOpenHelper=new DBOpenHelper(MyApplication.getContext(), "test12.db", null, 1);
         db = MyDBOpenHelper.getWritableDatabase();
         Date date = new Date(System.currentTimeMillis());
         String tabname= app_name+" "+date;
-        t_log=new LogThread(app_name, tabname);
+        t_log=new LogThread(app_name, tabname, appUid);
         t_log.flag=1;
         t_log.start();
         t_bpf=new BPFThread(app_name, tabname);
@@ -332,7 +334,7 @@ public class Tracker {
                 //dialog dismiss
                 MyDialog.dismiss();
                 db.close();
-                String oldpath = "/data/data/fudan.secsys.apptracker/databases/test12.db";
+                String oldpath = "/data/data/CPIPC.Beepdroid.apptracker/databases/test12.db";
                 String newpath = "/sdcard/database/test12.db";
                 try{
                     File oldfile = new File(oldpath);

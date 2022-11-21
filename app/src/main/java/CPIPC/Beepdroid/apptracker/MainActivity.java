@@ -1,27 +1,23 @@
-package fudan.secsys.apptracker;
+package CPIPC.Beepdroid.apptracker;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 
-import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 
 public class MainActivity extends AppCompatActivity {
     static List<String> APP;
@@ -37,11 +33,27 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 getAppProcessName();
                 String name=text.getText().toString();
+                int appUid=0;
                 if(APP.indexOf(name)!=-1) {
+                    try {
+                        Process process = Runtime.getRuntime().exec("cmd package list packages -U");
+                        InputStream is = process.getInputStream();
+                        BufferedReader br = new BufferedReader(new InputStreamReader(is));
+                        String line;
+                        while ((line = br.readLine()) != null){
+                            if(line.contains(name)){
+                                appUid = Integer.parseInt(line.substring(line.indexOf("uid:") + "uid:".length()));
+                                break;
+                            }
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
                     text.setEnabled(false);
                     button_start.setEnabled(false);
                     button_stop.setEnabled(true);
-                    Tracker.startTrack(name);
+                    Tracker.startTrack(name, appUid);
                 }
                 else{
                     Toast.makeText(getApplicationContext(),"No such APP!",Toast.LENGTH_SHORT).show();

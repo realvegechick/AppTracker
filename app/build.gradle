@@ -5,7 +5,7 @@ android {
     buildToolsVersion "29.0.2"
 
     defaultConfig {
-        applicationId "fudan.secsys.apptracker"
+        applicationId "CPIPC.Beepdroid.apptracker"
         minSdkVersion 26
         targetSdkVersion 30
         versionCode 1
